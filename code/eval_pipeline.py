@@ -1,10 +1,11 @@
 # Merge + vLLM inference + strict/loose scoring pipeline (wraps the released MDP-GRPO scripts).
 import signal
 
+# set tags kept as used in all artifact filenames: 그들500 = MDP-500, 우리500 = Assembled-500
 EVALSETS = [("그들500", THEIR_EVAL), ("우리500", OUR_EVAL)]
-# TQDM_DISABLE 은 절대 쓰지 말 것 — vLLM 이 진행표시줄 경과시간으로 처리량을 계산해
-# llm.generate 안에서 division by zero 가 난다(eval r5 에서 실측).
-# run 마다 TB_MODE 가 바뀌므로 호출 시점의 os.environ 을 쓴다
+# Never set TQDM_DISABLE: vLLM derives throughput from the progress-bar elapsed
+# time and divides by zero inside llm.generate without it (observed empirically).
+# TB_MODE changes per run, so the environment is read at call time.
 def _child_env():
     return dict(os.environ, VLLM_LOGGING_LEVEL="WARNING", PYTHONUNBUFFERED="1")
 NOISY = ("Processed prompts", "it/s, est. speed", "Adding requests",
@@ -28,10 +29,10 @@ def run_stream(cmd, cwd=None, abort_on=None, tag="", on_line=None):
                 p.wait(timeout=30)
             except Exception:
                 p.kill()
-            raise RuntimeError(f"[{tag}] 중단: {line[:300]}")
+            raise RuntimeError(f"[{tag}] aborted: {line[:300]}")
     p.wait()
     if p.returncode != 0:
-        raise RuntimeError(f"[{tag}] 종료코드 {p.returncode}")
+        raise RuntimeError(f"[{tag}] exit code {p.returncode}")
 
 class _TO(Exception):
     pass
@@ -47,7 +48,7 @@ def safe_copytree(src, dst, sec=600):
         shutil.copytree(src, dst, ignore=shutil.ignore_patterns("checkpoint-*", "runs", "*.pt"))
         return True
     except Exception as e:
-        print(f"  [복사 실패] {type(e).__name__}"); return False
+        print(f"  [copy failed] {type(e).__name__}"); return False
     finally:
         signal.alarm(0); signal.signal(signal.SIGALRM, old)
 
@@ -75,7 +76,7 @@ def collect_mlflow(root):
     return out
 
 def run_eval(model_path, label):
-    """그들 do_inference.py + check.py 로 두 평가셋을 잰다."""
+    """Evaluates both sets with the prior work's do_inference.py + check.py."""
     from transformers import AutoTokenizer
     slug = label.replace("/", "-")
     parts, counts = [], []
@@ -91,14 +92,14 @@ def run_eval(model_path, label):
                 "--gpu_memory_utilization", str(GPU_MEM_UTIL), "--dtype", DTYPE],
                cwd="/content", abort_on=ABORT_ON, tag=label)
     out_rows = read_jsonl(cout)
-    assert len(out_rows) == len(parts), f"응답 수 불일치 {len(out_rows)} != {len(parts)}"
+    assert len(out_rows) == len(parts), f"response count mismatch {len(out_rows)} != {len(parts)}"
     bad = [r for r in out_rows if str(r.get("response", "")).startswith(("Batch error", "Error:"))]
     uniq = len({r.get("response", "") for r in out_rows})
-    print(f"  생성 {(time.time()-t0)/60:.1f}분  오류문자열 {len(bad)}건  고유 {uniq}종")
+    print(f"  generation {(time.time()-t0)/60:.1f} min  error strings {len(bad)}  distinct {uniq}")
     if bad:
-        raise RuntimeError(f"생성 실패가 섞였다: {bad[0]['response'][:120]}")
+        raise RuntimeError(f"generation failures present: {bad[0]['response'][:120]}")
     if uniq <= 1:
-        raise RuntimeError("모든 응답이 동일하다")
+        raise RuntimeError("all responses identical")
 
     tok = AutoTokenizer.from_pretrained(model_path)
     res, off = {}, 0
@@ -119,22 +120,22 @@ def run_eval(model_path, label):
         res[name] = {"ssr_macro": macro, "ssr_micro": m["instruction_accuracy"],
                      "hsr": m["prompt_accuracy"], "ntok_mean": st.mean(ntok),
                      "difficulty": m.get("difficulty", {}), "tier1": m.get("tier1", {})}
-        print(f"  [{label}/{name}] SSR매크로 {macro*100:.2f} 마이크로 "
+        print(f"  [{label}/{name}] SSR macro {macro*100:.2f} micro "
               f"{m['instruction_accuracy']*100:.2f}  HSR {m['prompt_accuracy']*100:.2f}"
-              f"  토큰 {st.mean(ntok):.0f}")
+              f"  tokens {st.mean(ntok):.0f}")
     del tok
     return res
 
-# ---------------- 기준선 (한 번만. 있으면 재사용) ----------------
+# ---------------- baseline (once; reused if present) ----------------
 BASE_PATH = os.path.join(OUT_DIR, f"result_{PREFIX}baseline.json")
 if os.path.exists(BASE_PATH):
     BASELINE = json.load(open(BASE_PATH, encoding="utf-8"))
     print("=" * 70)
-    print("  기준선 재사용 (이미 측정됨)")
+    print("  baseline reused (already measured)")
     for k, v in BASELINE.items():
-        print(f"    {k}  SSR매크로 {v['ssr_macro']*100:.2f}  HSR {v['hsr']*100:.2f}")
+        print(f"    {k}  SSR macro {v['ssr_macro']*100:.2f}  HSR {v['hsr']*100:.2f}")
 else:
-    print("=" * 70); print(f"  기준선 평가 — {MODEL_ID}"); print("=" * 70)
+    print("=" * 70); print(f"  baseline evaluation -- {MODEL_ID}"); print("=" * 70)
     BASELINE = run_eval(MODEL_ID, "baseline")
     with open(BASE_PATH, "w", encoding="utf-8") as f:
         json.dump(BASELINE, f, ensure_ascii=False, indent=2)

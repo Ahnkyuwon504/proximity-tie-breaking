@@ -4,25 +4,25 @@ import os, sys, json, time, re, shutil, subprocess, collections
 import statistics as st
 
 print("=" * 70)
-print("  NOTEBOOK: mdpgrpo_train  r12   [A100 80GB · 최대 12시간]")
+print("  NOTEBOOK: mdpgrpo_train  r12   [A100 80GB, up to 12 h]")
 print("=" * 70)
 
 WORK_ROOT = "WORK_ROOT  # set to your working directory"
 REPO      = WORK_ROOT + "/MDP-GRPO-main"
 DATA_DIR  = WORK_ROOT + "/data"
-OUT_DIR   = WORK_ROOT + "/runs"          # 판번호와 무관. 모든 run 이 여기 쌓인다
+OUT_DIR   = WORK_ROOT + "/runs"          # independent of notebook revision; all runs accumulate here
 THEIR_EVAL = REPO + "/data/data_test.jsonl"
 
 LOCAL_SRC, LOCAL_TRN, LOCAL_RUN = "/content/src", "/content/training", "/content/run"
 
-# ══════════════════ 여기 두 줄만 고치십시오 ══════════════════
+# ================== edit only these two lines =================
 
 MODEL_KEY = "llama1b"
 RUNS = [("tb_placebo", 43), ("tb_placebo", 44)]
 
-BUDGET_HOURS = 48.0        # 이 시간을 넘기면 새 run 을 시작하지 않는다
+BUDGET_HOURS = 48.0        # no new run is started past this budget
 
-# 모델별 설정. gen_batch 는 VRAM 에 맞춘 값이고 나머지는 전 모델 공통이다.
+# per-model presets; gen_batch is tuned to VRAM, everything else is shared
 
 PRESETS = {
     "gemma": dict(model_id="google/gemma-2-2b-it",
@@ -43,21 +43,21 @@ PRESETS = {
                       gen_batch=192, est_h=3.0, prefix="qwen3_17b_"),
 }
 
-assert MODEL_KEY in PRESETS, f"MODEL_KEY 는 {list(PRESETS)} 중 하나"
+assert MODEL_KEY in PRESETS, f"MODEL_KEY must be one of {list(PRESETS)}"
 PS = PRESETS[MODEL_KEY]
 MODEL_ID = PS["model_id"]
-PREFIX   = PS["prefix"]          # gemma 는 기존 산출물과 이름을 맞추려 접두사 없음
-print(f"\n모델  {MODEL_KEY}  ({MODEL_ID})")
-print(f"산출물 접두사  '{PREFIX}'    run 당 예상 {PS['est_h']:.1f}시간")
+PREFIX   = PS["prefix"]          # gemma keeps no prefix to match earlier artifacts
+print(f"\nmodel  {MODEL_KEY}  ({MODEL_ID})")
+print(f"artifact prefix  '{PREFIX}'    est. {PS['est_h']:.1f} h per run")
 
-# 아래는 참고용 — 다른 변형을 돌릴 때 RUNS 에 넣으면 된다
-# ("tb_prox", 42)     붕괴 그룹만 (v1)
-# ("tb_placebo", 43)  위약군
-# ("da", 42) ("pt", 42) ("mt", 42)   논문 처방
+# reference: add these to RUNS to train other variants
+# ("tb_prox", 42)     collapsed groups only (v1)
+# ("tb_placebo", 43)  placebo
+# ("da", 42) ("pt", 42) ("mt", 42)   prior-work prescriptions
 
-# 변형별로 바뀌는 인자만 적는다. 나머지는 BASE_ARGS 공통
+# only the per-variant arguments are listed; everything else is BASE_ARGS
 VARIANTS = {
-    # 아래 셋은 train.py 인자가 GRPO 와 동일하다. 개입은 §C 의 보상 함수에서 일어난다.
+    # these three share the GRPO train.py arguments; the intervention happens in the reward wrapper
     "tb_nz":      {},
     "tb_tie":     {},
     "tb_nz":      {},
@@ -67,14 +67,14 @@ VARIANTS = {
     "tb_v2":      {},
     "tb_placebo": {},
     "tb_prox":    {},
-    "grpo":  {},                                              # 표준 GRPO
-    "mt":    {"temperature_list": "0.1,0.4,0.7,1.0,0.1,0.4,0.7,1.0"},   # 다중 온도(G=8)
+    "grpo":  {},                                              # standard GRPO
+    "mt":    {"temperature_list": "0.1,0.4,0.7,1.0,0.1,0.4,0.7,1.0"},   # multi-temperature (G=8)
     "da":    {"DA_ALPHA": 0.2},
-    "da_half": {"DA_ALPHA": 0.2, "DA_GOAL_MU_MODE": "half"},                         # 논문 본문 Eq.4 — 앵커 0.5 고정
-                                                              #   (§B 하단에서 grpo_trainer 를 패치하고
-                                                              #    DA_HALF 환경변수로 run 마다 전환한다)
+    "da_half": {"DA_ALPHA": 0.2, "DA_GOAL_MU_MODE": "half"},                         # prior work's main-text Eq. 4 -- anchor fixed at 0.5
+                                                              #   (grpo_trainer is patched below and switched
+                                                              #    per run via the DA_HALF environment variable)
     "pt":    {"DO_PROSPECT": True, "prospect_lambda_pos": 1.25,
-              "prospect_lambda_neg": 2.0, "prospect_beta": 0.8},   # 논문 §5.5 값
+              "prospect_lambda_neg": 2.0, "prospect_beta": 0.8},   # prior work's Sec. 5.5 values
     "da_pt": {"DA_ALPHA": 0.2, "DO_PROSPECT": True, "prospect_lambda_pos": 1.25,
               "prospect_lambda_neg": 2.0, "prospect_beta": 0.8},
     "akl":   {"beta_by_adv_sign": True, "beta_pos": 0.01, "beta_neg": 0.025},
@@ -96,35 +96,35 @@ BASE_ARGS = {
 GEN_BATCH_SIZE, MAX_MODEL_LEN, MAX_TOKENS = PS["gen_batch"], 2048, 1024
 GPU_MEM_UTIL, DTYPE, EVAL_MODE = 0.9, "bfloat16", "strict"
 
-assert os.path.isdir(REPO), f"저장소 없음: {REPO}"
+assert os.path.isdir(REPO), f"repository missing: {REPO}"
 os.makedirs(OUT_DIR, exist_ok=True); os.makedirs(LOCAL_RUN, exist_ok=True)
 
 import torch, transformers, peft, trl, dataclasses
 print(f"torch {torch.__version__} | transformers {transformers.__version__} | "
       f"peft {peft.__version__} | trl {trl.__version__}")
-assert torch.cuda.is_available(), "GPU 런타임이 아님"
+assert torch.cuda.is_available(), "not a GPU runtime"
 _p = torch.cuda.get_device_properties(0)
 _vram = _p.total_memory / 1e9
 print(f"{_p.name}  VRAM {_vram:.0f}GB")
 if _vram < 60:
-    print("  ⚠ 40GB 에서는 OOM. 80GB 런타임을 쓰거나 배치를 8/4 → 4/8 로 바꿀 것")
+    print("  WARNING: OOM on 40 GB; use an 80 GB runtime or change the batch split 8/4 -> 4/8")
 
 from trl import GRPOConfig
 _f = {x.name for x in dataclasses.fields(GRPOConfig)}
 assert not ({"temperature_list", "advantage_mode", "prospect_enable",
-             "beta_by_adv_sign"} - _f), "표준 TRL 이 깔려 있다 — §A 를 다시 볼 것"
-print("TRL 포크 확인")
+             "beta_by_adv_sign"} - _f), "stock TRL is installed -- redo the setup step"
+print("TRL fork confirmed")
 
 _r = subprocess.run([sys.executable, "-c", "import vllm;print(vllm.__version__)"],
                     capture_output=True, text=True)
-assert _r.returncode == 0, "vllm import 실패:\n" + (_r.stderr or "")[-800:]
+assert _r.returncode == 0, "vllm import failed:\n" + (_r.stderr or "")[-800:]
 print(f"vllm {_r.stdout.strip()}")
 
-# ---------------- 저장소 복사 + 없어진 두 모듈 복원 ----------------
+# ---------------- copy repository + reconstruct the two missing modules ----------------
 shutil.rmtree(LOCAL_SRC, ignore_errors=True); shutil.copytree(os.path.join(REPO, "src"), LOCAL_SRC)
 shutil.rmtree(LOCAL_TRN, ignore_errors=True); shutil.copytree(os.path.join(REPO, "training"), LOCAL_TRN)
 
-CONSTANTS_SRC = '''"""instructions.py 가 요구하는 상수. 원본 저장소에 없어 복원했다."""
+CONSTANTS_SRC = '''"""Constants required by instructions.py; reconstructed (absent from the released repository)."""
 import collections
 _EN = {
     "COMPARISON_RELATION": ("less than", "at least", "more than", "up to", "exactly"),
@@ -142,10 +142,10 @@ _EN = {
 _Consts = collections.namedtuple("_Consts", sorted(_EN.keys()))
 def get_instruction_constants(language="en"):
     if language != "en":
-        raise NotImplementedError("복원본은 영어만 지원한다.")
+        raise NotImplementedError("the reconstruction supports English only")
     return _Consts(**_EN)
 '''
-REGISTRY_SRC = '''"""instruction_id -> Instruction class. 원본 저장소에 없어 복원했다."""
+REGISTRY_SRC = '''"""instruction_id -> Instruction class; reconstructed (absent from the released repository)."""
 import instructions
 INSTRUCTION_DICT = {
     "keywords:existence": instructions.KeywordChecker,
@@ -185,10 +185,10 @@ for _p2 in (LOCAL_SRC, LOCAL_TRN):
         sys.path.insert(0, _p2)
 import instructions, instructions_registry
 REG = instructions_registry.INSTRUCTION_DICT
-print(f"복원 모듈 import 통과. 등록된 제약 {len(REG)}종")
+print(f"reconstructed modules import OK; {len(REG)} constraint classes registered")
 os.environ["PYTHONPATH"] = LOCAL_SRC + ":" + LOCAL_TRN + ":" + os.environ.get("PYTHONPATH", "")
 
-# ---------------- 변형 인자가 train.py 에 실재하는지 검증 ----------------
+# ---------------- verify that variant arguments exist in train.py ----------------
 _src = open(os.path.join(LOCAL_TRN, "train.py"), encoding="utf-8").read()
 _known = set(re.findall(r"^\s{4}([A-Za-z_][A-Za-z0-9_]*)\s*:", _src, re.M))
 _bad = []
@@ -199,14 +199,14 @@ for _v, _ov in VARIANTS.items():
 for _k in BASE_ARGS:
     if _k not in _known:
         _bad.append(f"BASE/{_k}")
-print(f"\ntrain.py 인자 {len(_known)}개 확인")
+print(f"\ntrain.py: {len(_known)} arguments found")
 if _bad:
-    print(f"  ⚠ train.py 에 없는 인자: {_bad}")
-    print("  → 해당 변형은 실행 시 죽습니다. VARIANTS 를 고치십시오.")
+    print(f"  WARNING: arguments missing from train.py: {_bad}")
+    print("  -> those variants will fail at launch; fix VARIANTS")
 else:
-    print("  모든 변형 인자가 train.py 에 존재")
+    print("  all variant arguments exist in train.py")
 
-# ---------------- HF 토큰 ----------------
+# ---------------- HF token ----------------
 _tok = None
 try:
     from google.colab import userdata
@@ -219,12 +219,12 @@ if not _tok:
         _tok = get_token()
     except Exception:
         pass
-print(f"HF 토큰 {'있음' if _tok else '없음 — gemma 를 받지 못합니다'}")
+print(f"HF token {'present' if _tok else 'absent -- gemma cannot be downloaded'}")
 if _tok:
     os.environ["HF_TOKEN"] = _tok
     os.environ["HUGGING_FACE_HUB_TOKEN"] = _tok
 
-# ---------------- 데이터 ----------------
+# ---------------- data ----------------
 def read_jsonl(p):
     return [json.loads(l) for l in open(p, encoding="utf-8") if l.strip()]
 
@@ -232,38 +232,38 @@ PATHS = {k: os.path.join(DATA_DIR, f) for k, f in
          [("train", "train_3000.jsonl"), ("ourtest", "ourtest_500.jsonl"),
           ("spare", "spare_1500.jsonl")]}
 for k, p in PATHS.items():
-    assert os.path.exists(p), f"없음: {p}"
-    print(f"  {k:8s} {len(read_jsonl(p)):5d}개")
+    assert os.path.exists(p), f"missing: {p}"
+    print(f"  {k:8s} {len(read_jsonl(p)):5d} rows")
 THEIR_ROWS = read_jsonl(THEIR_EVAL)
 TRAIN_FILE, OUR_EVAL = PATHS["train"], PATHS["ourtest"]
 
 N_STEPS = len(read_jsonl(TRAIN_FILE)) * BASE_ARGS["num_generations"] // (
     BASE_ARGS["per_device_train_batch_size"] * BASE_ARGS["gradient_accumulation_steps"])
-print(f"\n계획: {len(RUNS)} run  예상 {len(RUNS)*PS['est_h']:.1f}시간 (예산 {BUDGET_HOURS}시간)")
+print(f"\nplan: {len(RUNS)} runs  est. {len(RUNS)*PS['est_h']:.1f} h (budget {BUDGET_HOURS} h)")
 for v, s in RUNS:
-    print(f"  {v}_seed{s:<4d} {VARIANTS.get(v, '없는 변형!')}")
-print(f"run 당 {N_STEPS} 스텝")
+    print(f"  {v}_seed{s:<4d} {VARIANTS.get(v, 'unknown variant!')}")
+print(f"{N_STEPS} steps per run")
 
-# ---------------- da_half 용 앵커 패치 ----------------
-# 저자 코드는 goal_mu = max(0.5, 그룹평균) 이라 학습 후 δ 가 0 이 된다.
-# 논문 본문 Eq.4 는 0.5 고정. DA_HALF=1 일 때만 0.5 를 쓰도록 바꾼다.
+# ---------------- anchor patch for da_half ----------------
+# The released code uses goal_mu = max(0.5, group mean), so delta vanishes late in
+# training; the paper's main-text Eq. 4 fixes 0.5. Patched to use 0.5 only when DA_HALF=1.
 import trl, inspect
 GT_PATH = os.path.join(os.path.dirname(inspect.getfile(trl)), "trainer", "grpo_trainer.py")
 _gt = open(GT_PATH, encoding="utf-8").read()
 
 if "__DA_HALF_PATCH__" in _gt:
-    print("da_half 패치 이미 적용됨")
+    print("da_half patch already applied")
 else:
     _cands = [(i + 1, l) for i, l in enumerate(_gt.split("\n")) if "goal_mu" in l]
-    print("goal_mu 관련 줄:")
+    print("lines mentioning goal_mu:")
     for i, l in _cands[:12]:
         print(f"  {i:5d} | {l.strip()[:120]}")
     _asn = [(i, l) for i, l in _cands
             if re.search(r"goal_mu\s*=", l) and "def " not in l and "self.goal_mu" not in l]
     if not _asn:
         _asn = [(i, l) for i, l in _cands if re.search(r"goal_mu\s*=", l)]
-    assert _asn, ("grpo_trainer.py 에서 goal_mu 대입문을 못 찾았다. "
-                  "위 목록을 보고 패치 대상을 지정해야 한다")
+    assert _asn, ("goal_mu assignment not found in grpo_trainer.py; "
+                  "inspect the list above and set the patch target")
     _ln, _src = _asn[0]
     _indent = _src[:len(_src) - len(_src.lstrip())]
     _new = (f'{_indent}# __DA_HALF_PATCH__\n'
@@ -273,9 +273,9 @@ else:
             f'{_indent}    ' + _src.strip())
     _lines = _gt.split("\n"); _lines[_ln - 1] = _new
     open(GT_PATH, "w", encoding="utf-8").write("\n".join(_lines))
-    print(f"\n패치 적용 (줄 {_ln})")
-    print("  전:", _src.strip()[:110])
-    print("  후: DA_HALF=1 이면 goal_mu = 0.5, 아니면 원본")
+    print(f"\npatch applied (line {_ln})")
+    print("  before:", _src.strip()[:110])
+    print("  after: goal_mu = 0.5 when DA_HALF=1, original otherwise")
 
 _chk = subprocess.run([sys.executable, "-c",
     "import trl, inspect, os;"
@@ -285,11 +285,11 @@ _chk = subprocess.run([sys.executable, "-c",
     "import ast; ast.parse(s); print('SYNTAX_OK')"], capture_output=True, text=True)
 print(" ", (_chk.stdout or _chk.stderr[-400:]).strip().replace("\n", " / "))
 assert "PATCHED" in _chk.stdout and "SYNTAX_OK" in _chk.stdout, \
-    "패치 후 grpo_trainer.py 가 깨졌다 — §A 부터 다시"
+    "grpo_trainer.py broken after patching -- restart from setup"
 
-# ---------------- 모델 호환 사전 검증 ----------------
+# ---------------- model-compatibility pre-checks ----------------
 print("\n" + "=" * 70)
-print("  모델 호환 검증")
+print("  model compatibility checks")
 print("=" * 70)
 _probe = f'''
 import sys, json
@@ -302,7 +302,7 @@ print("ARCH", cfg.architectures[0] if cfg.architectures else "?")
 print("LAYERS", getattr(cfg, "num_hidden_layers", "?"))
 print("VOCAB", getattr(cfg, "vocab_size", "?"))
 print("HAS_TEMPLATE", bool(getattr(tok, "chat_template", None)))
-# 시스템 메시지를 받는가
+# does the chat template accept a system message?
 ok_sys = True
 try:
     tok.apply_chat_template([{{"role":"system","content":"s"}},
@@ -317,14 +317,14 @@ print("TEMPLATE_SAMPLE", json.dumps(t[:220]))
 '''
 _r = subprocess.run([sys.executable, "-c", _probe], capture_output=True, text=True)
 print((_r.stdout or "") + ((_r.stderr or "")[-600:] if _r.returncode else ""))
-assert _r.returncode == 0, "모델 로드 실패 — HF 토큰·라이선스 승인 확인"
+assert _r.returncode == 0, "model load failed -- check HF token and license acceptance"
 assert "HAS_TEMPLATE True" in _r.stdout, \
-    "채팅 템플릿이 없다. do_inference.py 가 템플릿에 의존하므로 이 모델은 쓸 수 없다"
+    "no chat template; do_inference.py depends on one, so this model cannot be used"
 
-# LoRA target_modules 가 이 모델에 실재하는가
+# do the LoRA target_modules exist in this model?
 _tm = re.search(r"target_modules\s*=\s*\[([^\]]*)\]",
                 open(os.path.join(LOCAL_TRN, "train.py"), encoding="utf-8").read())
-assert _tm, "train.py 에서 target_modules 를 못 찾음"
+assert _tm, "target_modules not found in train.py"
 TARGET_MODULES = [x.strip().strip("\"'") for x in _tm.group(1).split(",") if x.strip()]
 print(f"\nLoRA target_modules {TARGET_MODULES}")
 _probe2 = f'''
@@ -340,9 +340,9 @@ _r2 = subprocess.run([sys.executable, "-c", _probe2], capture_output=True, text=
 _miss = re.search(r"MISSING (\[.*\])", _r2.stdout or "")
 if _miss:
     _ml = eval(_miss.group(1))
-    print(f"  이 모델에 없는 모듈: {_ml if _ml else '없음 ✅'}")
-    assert not _ml, f"LoRA 대상 모듈 {_ml} 이 이 모델에 없다 — train.py 수정 필요"
+    print(f"  modules absent from this model: {_ml if _ml else 'none'}")
+    assert not _ml, f"LoRA target modules {_ml} absent from this model -- train.py needs adjustment"
 else:
-    print("  ⚠ 모듈 확인 실패(메모리 부족일 수 있음). 학습 중 오류가 나면 여기를 의심할 것")
+    print("  WARNING: module check failed (possibly OOM); suspect this if training errors occur")
     print("   ", (_r2.stderr or "")[-400:])
-print("\n✅ 모델 호환 확인 완료")
+print("\nmodel compatibility confirmed")

@@ -1,7 +1,7 @@
 # Generates Figs. 2-5 of the paper from the run outputs.
 # =========================================================
-# §K  FIG.2 ~ FIG.5 일괄 생성 → ahn2~ahn5 (PNG+PDF) → Drive
-#     이 셀 하나로 끝. 몇 번을 다시 돌려도 안전합니다.
+# Generates FIG.2 - FIG.5 (files ahn2 - ahn5, PNG+PDF).
+#     Safe to re-run; outputs are overwritten.
 # =========================================================
 import os, sys, json, glob, shutil, subprocess, collections
 from pathlib import Path
@@ -13,7 +13,7 @@ try:
 except Exception as e:
     print('[drive]', e)
 
-# ---- 폰트 + matplotlib 규격 ----------------------------------------
+# ---- fonts + matplotlib sizing ----------------------------------------
 subprocess.run('apt-get -qq install -y fonts-liberation', shell=True, capture_output=True)
 import matplotlib, matplotlib.pyplot as plt, matplotlib.font_manager as fm
 try: fm._load_fontmanager(try_read_cache=False)
@@ -36,24 +36,24 @@ matplotlib.rcParams.update({
     'savefig.bbox':'tight', 'savefig.pad_inches':.02,
 })
 
-# ---- 경로 ----------------------------------------------------------
+# ---- paths ----------------------------------------------------------
 _DEFAULT = 'WORK_ROOT  # set to your working directory'
 ROOT = Path(_DEFAULT)
 if not ROOT.exists():
     _h = glob.glob('.', recursive=True)
     ROOT = Path(_h[0]) if _h else None
-assert ROOT is not None, 'mdp-grpo 폴더를 찾지 못했습니다'
+assert ROOT is not None, 'project root not found'
 RUNS, EVAL = ROOT/'runs', ROOT/'eval'
 OUT = Path('/content/fig_out'); OUT.mkdir(exist_ok=True)
-print('ROOT:', ROOT, '| 폰트:', _PICKF)
+print('ROOT:', ROOT, '| font:', _PICKF)
 
-# ---- 색 (FIG.1 과 통일) --------------------------------------------
+# ---- colors (aligned with FIG.1) --------------------------------------------
 _AMB, _TEA, _DAF, _PLC = '#E08A2E', '#2E7D96', '#5A5A5A', '#BDBDBD'
 _LBL = {'grpo':'GRPO','da_half':'DA-fixed','tb_placebo':'Placebo','tb_tie':'PTB'}
 _CLR = {'grpo':_AMB,'da_half':_DAF,'tb_placebo':_PLC,'tb_tie':_TEA}
 _STY = {'grpo':'-','da_half':'--','tb_tie':'-.'}
 _MRK = {'tb_tie':'o','tb_placebo':'s','da_half':'^'}
-_BAND = 'range'            # FIG.3 밴드: 'range'(min-max) 또는 'sd'
+_BAND = 'range'            # FIG.3 band: 'range' (min-max) or 'sd'
 
 def _load(p):
     try: return json.load(open(p, encoding='utf-8'))
@@ -90,7 +90,7 @@ def _cells(model, var, bench, field='ssr_macro'):
     return np.array(out, float)
 
 # ================================================== FIG.2
-print('='*66); print('FIG.2  C별 동점률 / 갈림 비율'); print('='*66)
+print('='*66); print('FIG.2  per-C tie rate / separation rate'); print('='*66)
 _C     = np.arange(1, 7)
 _TIED  = np.array([98.2, 96.8, 97.1, 95.2, 95.2, 95.3])
 _SPLIT = np.array([16.4, 21.4, 31.8, 42.9, 60.9, 73.8])
@@ -105,7 +105,7 @@ ax.grid(axis='y', color='#DDDDDD', lw=.4); ax.set_axisbelow(True)
 _save(fig, 2)
 
 # ================================================== FIG.3
-print(); print('='*66); print('FIG.3  엔트로피 / KL  (세 계열 n=3)'); print('='*66)
+print(); print('='*66); print('FIG.3  entropy / KL (three series, n=3)'); print('='*66)
 _PICK = {'grpo':[42,45,46], 'da_half':[42,43,44], 'tb_tie':[42,45,46]}
 def _clean(p):
     d = _load(p)
@@ -139,10 +139,11 @@ fig.tight_layout(pad=.2); _save(fig, 3)
 for var in ('grpo','da_half','tb_tie'):
     for key in ('entropy','kl'):
         v = [_curve(d, key)[1][-1] for _, d in _SER[var]]
-        print(f'    {_LBL[var]:9s} {key:8s} 종점 {np.mean(v):.3f} ± {np.std(v, ddof=1):.3f}')
+        print(f'    {_LBL[var]:9s} {key:8s} endpoint {np.mean(v):.3f} ± {np.std(v, ddof=1):.3f}')
 
 # ================================================== FIG.4
-print(); print('='*66); print('FIG.4  셀별 차등값 분포'); print('='*66)
+print(); print('='*66); print('FIG.4  per-cell differential distribution'); print('='*66)
+# NOTE: keys below are the (Korean) field names of the archived reference JSON
 _cw     = _dt.get('셀별') or []
 _pooled = {r['변형']: r['차이'] for r in (_dt.get('통합검정') or [])}
 _ORDER  = [('tb_tie','PTB',_TEA,'o'), ('tb_placebo','Placebo',_PLC,'s'),
@@ -156,14 +157,14 @@ for i, (key, lab, col, mk) in enumerate(_ORDER):
                facecolor=col, edgecolor='#444444', linewidth=.4, zorder=3)
     p = _pooled.get(key)
     if p is not None: ax.plot([i-.28, i+.28], [p, p], color=col, lw=2.0, zorder=4)
-    print(f'  {lab:9s} n={len(v):2d}  양수 {int((v>0).sum())}/{len(v)}  pooled {p:+.2f}')
+    print(f'  {lab:9s} n={len(v):2d}  positive {int((v>0).sum())}/{len(v)}  pooled {p:+.2f}')
 ax.set_xticks(range(3)); ax.set_xticklabels([l for _,l,_,_ in _ORDER])
 ax.set_ylabel('Covered - uncovered\n(percentage points)'); ax.set_xlim(-.55, 2.55)
 ax.grid(axis='y', color='#EEEEEE', lw=.4); ax.set_axisbelow(True)
 fig.tight_layout(pad=.2); _save(fig, 4)
 
 # ================================================== FIG.5
-print(); print('='*66); print('FIG.5  12칸 Δ + 표준오차'); print('='*66)
+print(); print('='*66); print('FIG.5  12-cell deltas + standard errors'); print('='*66)
 _MR = [('gemma','Gemma-2-2B'), ('gemma3_1b','Gemma-3-1B'),
        ('llama','Llama-3.2-3B'), ('llama1b','Llama-3.2-1B')]
 _BR = [('theirs','Their set'), ('ours','Ours'), ('ifeval','IFEval')]
@@ -198,7 +199,7 @@ ax.grid(axis='y', color='#EEEEEE', lw=.4); ax.set_axisbelow(True)
 fig.tight_layout(pad=.2); _save(fig, 5)
 
 # ================================================== Drive
-print(); print('='*66); print('Drive 저장'); print('='*66)
+print(); print('='*66); print('saving outputs'); print('='*66)
 _DEST = ROOT/'figures'; _DEST.mkdir(exist_ok=True)
 for p in list(_DEST.iterdir()):
     if p.name.startswith('kim') or p.stem in ('ahn3a','ahn3b'): p.unlink()
@@ -206,8 +207,8 @@ _n = 0
 for p in sorted(OUT.iterdir()):
     if p.suffix.lower() in ('.pdf','.png') and p.name.startswith('ahn'):
         shutil.copy2(p, _DEST/p.name); _n += 1
-print(f'  {_n}개 → {_DEST}')
+print(f'  {_n} files -> {_DEST}')
 for p in sorted(_DEST.iterdir()):
     print(f'    {p.name:14s} {p.stat().st_size:>9,} B')
-print('\n  Word 삽입 = PNG (한 단 8.4cm / 페이지폭 17.6cm) · 투고 = PDF')
-print('  ※ ahn1 은 draw.io 산출물 — 직접 figures/ 에 올려두십시오.')
+print('\n  Word insertion = PNG (single column 8.4 cm / page width 17.6 cm); submission = PDF')
+print('  NOTE: ahn1 is a draw.io artifact; place it in figures/ manually.')
