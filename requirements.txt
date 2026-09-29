@@ -1,0 +1,6 @@
+# Statistics reproduction (CPU)
+pandas>=2.0
+numpy>=1.24
+statsmodels>=0.14
+# Training (Colab; versions used in the experiments)
+# trl==0.9.6, transformers==4.43.3, vllm==0.5.4  -- see paper Sec. V-B

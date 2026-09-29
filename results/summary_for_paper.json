@@ -1,0 +1,232 @@
+{
+ "gemma|baseline|theirs": {
+  "n": 1,
+  "mean": 57.27,
+  "sd": 0.0
+ },
+ "gemma|baseline|ours": {
+  "n": 1,
+  "mean": 56.78,
+  "sd": 0.0
+ },
+ "gemma|grpo|theirs": {
+  "n": 5,
+  "mean": 70.51,
+  "sd": 0.41
+ },
+ "gemma|grpo|ours": {
+  "n": 5,
+  "mean": 73.97,
+  "sd": 0.75
+ },
+ "gemma|tb_tie|theirs": {
+  "n": 5,
+  "mean": 71.71,
+  "sd": 1.26
+ },
+ "gemma|tb_tie|ours": {
+  "n": 5,
+  "mean": 74.6,
+  "sd": 1.4
+ },
+ "gemma|da_half|theirs": {
+  "n": 3,
+  "mean": 71.57,
+  "sd": 0.58
+ },
+ "gemma|da_half|ours": {
+  "n": 3,
+  "mean": 73.51,
+  "sd": 1.27
+ },
+ "gemma|tb_placebo|theirs": {
+  "n": 3,
+  "mean": 71.29,
+  "sd": 0.98
+ },
+ "gemma|tb_placebo|ours": {
+  "n": 3,
+  "mean": 72.97,
+  "sd": 0.87
+ },
+ "gemma|tb_prox|theirs": {
+  "n": 3,
+  "mean": 71.42,
+  "sd": 0.48
+ },
+ "gemma|tb_prox|ours": {
+  "n": 3,
+  "mean": 73.72,
+  "sd": 1.33
+ },
+ "gemma|da|theirs": {
+  "n": 3,
+  "mean": 69.69,
+  "sd": 0.92
+ },
+ "gemma|da|ours": {
+  "n": 3,
+  "mean": 73.68,
+  "sd": 0.1
+ },
+ "gemma|pt|theirs": {
+  "n": 2,
+  "mean": 61.54,
+  "sd": 0.47
+ },
+ "gemma|pt|ours": {
+  "n": 2,
+  "mean": 60.59,
+  "sd": 0.01
+ },
+ "gemma3_1b|baseline|theirs": {
+  "n": 1,
+  "mean": 56.1,
+  "sd": 0.0
+ },
+ "gemma3_1b|baseline|ours": {
+  "n": 1,
+  "mean": 57.82,
+  "sd": 0.0
+ },
+ "gemma3_1b|grpo|theirs": {
+  "n": 5,
+  "mean": 60.86,
+  "sd": 0.72
+ },
+ "gemma3_1b|grpo|ours": {
+  "n": 5,
+  "mean": 65.26,
+  "sd": 0.9
+ },
+ "gemma3_1b|tb_tie|theirs": {
+  "n": 5,
+  "mean": 61.95,
+  "sd": 0.51
+ },
+ "gemma3_1b|tb_tie|ours": {
+  "n": 5,
+  "mean": 65.94,
+  "sd": 0.87
+ },
+ "gemma3_1b|da_half|theirs": {
+  "n": 3,
+  "mean": 61.63,
+  "sd": 1.09
+ },
+ "gemma3_1b|da_half|ours": {
+  "n": 3,
+  "mean": 65.34,
+  "sd": 0.3
+ },
+ "gemma3_1b|tb_placebo|theirs": {
+  "n": 3,
+  "mean": 61.16,
+  "sd": 1.22
+ },
+ "gemma3_1b|tb_placebo|ours": {
+  "n": 3,
+  "mean": 64.78,
+  "sd": 0.51
+ },
+ "llama|baseline|theirs": {
+  "n": 1,
+  "mean": 60.77,
+  "sd": 0.0
+ },
+ "llama|baseline|ours": {
+  "n": 1,
+  "mean": 63.85,
+  "sd": 0.0
+ },
+ "llama|grpo|theirs": {
+  "n": 5,
+  "mean": 64.49,
+  "sd": 0.47
+ },
+ "llama|grpo|ours": {
+  "n": 5,
+  "mean": 68.48,
+  "sd": 1.16
+ },
+ "llama|tb_tie|theirs": {
+  "n": 5,
+  "mean": 65.24,
+  "sd": 0.73
+ },
+ "llama|tb_tie|ours": {
+  "n": 5,
+  "mean": 68.81,
+  "sd": 0.98
+ },
+ "llama|da_half|theirs": {
+  "n": 3,
+  "mean": 64.04,
+  "sd": 0.19
+ },
+ "llama|da_half|ours": {
+  "n": 3,
+  "mean": 68.08,
+  "sd": 0.29
+ },
+ "llama|tb_placebo|theirs": {
+  "n": 3,
+  "mean": 64.29,
+  "sd": 0.52
+ },
+ "llama|tb_placebo|ours": {
+  "n": 3,
+  "mean": 68.65,
+  "sd": 0.31
+ },
+ "llama1b|baseline|theirs": {
+  "n": 1,
+  "mean": 46.38,
+  "sd": 0.0
+ },
+ "llama1b|baseline|ours": {
+  "n": 1,
+  "mean": 50.26,
+  "sd": 0.0
+ },
+ "llama1b|grpo|theirs": {
+  "n": 5,
+  "mean": 52.18,
+  "sd": 0.97
+ },
+ "llama1b|grpo|ours": {
+  "n": 5,
+  "mean": 56.01,
+  "sd": 0.61
+ },
+ "llama1b|tb_tie|theirs": {
+  "n": 5,
+  "mean": 52.21,
+  "sd": 0.84
+ },
+ "llama1b|tb_tie|ours": {
+  "n": 5,
+  "mean": 56.36,
+  "sd": 0.6
+ },
+ "llama1b|da_half|theirs": {
+  "n": 3,
+  "mean": 50.86,
+  "sd": 0.64
+ },
+ "llama1b|da_half|ours": {
+  "n": 3,
+  "mean": 55.28,
+  "sd": 0.08
+ },
+ "llama1b|tb_placebo|theirs": {
+  "n": 3,
+  "mean": 52.43,
+  "sd": 1.26
+ },
+ "llama1b|tb_placebo|ours": {
+  "n": 3,
+  "mean": 55.64,
+  "sd": 1.64
+ }
+}

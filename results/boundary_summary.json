@@ -1,0 +1,217 @@
+{
+ "note": "words/sentences 관측은 근사(approx=True) — 수치는 |o−t| 분포 서사용",
+ "grpo": {
+  "responses": 7701,
+  "kw_miss": 0,
+  "boundary": {
+   "atleast": {
+    "n": 6050,
+    "exact_hit": 31.6,
+    "within10": 32.8,
+    "within25": 37.0,
+    "med_rel_err": 0.667
+   },
+   "exact": {
+    "n": 2700,
+    "exact_hit": 43.8,
+    "within10": 44.6,
+    "within25": 50.6,
+    "med_rel_err": 0.25
+   },
+   "atmost": {
+    "n": 2205,
+    "exact_hit": 5.0,
+    "within10": 6.9,
+    "within25": 14.9,
+    "med_rel_err": 0.786
+   }
+  }
+ },
+ "tb_tie": {
+  "responses": 7702,
+  "kw_miss": 0,
+  "boundary": {
+   "atleast": {
+    "n": 6050,
+    "exact_hit": 33.1,
+    "within10": 34.4,
+    "within25": 39.2,
+    "med_rel_err": 0.5
+   },
+   "exact": {
+    "n": 2700,
+    "exact_hit": 46.1,
+    "within10": 47.2,
+    "within25": 54.2,
+    "med_rel_err": 0.2
+   },
+   "atmost": {
+    "n": 2205,
+    "exact_hit": 6.2,
+    "within10": 8.3,
+    "within25": 16.9,
+    "med_rel_err": 0.71
+   }
+  }
+ },
+ "tb_mplacebo": {
+  "responses": 2999,
+  "kw_miss": 0,
+  "boundary": {
+   "atleast": {
+    "n": 2874,
+    "exact_hit": 33.3,
+    "within10": 34.0,
+    "within25": 37.6,
+    "med_rel_err": 0.667
+   },
+   "exact": {
+    "n": 1446,
+    "exact_hit": 39.7,
+    "within10": 40.7,
+    "within25": 48.1,
+    "med_rel_err": 0.333
+   },
+   "atmost": {
+    "n": 1083,
+    "exact_hit": 5.1,
+    "within10": 6.9,
+    "within25": 14.6,
+    "med_rel_err": 0.846
+   }
+  }
+ },
+ "cases_success": [
+  {
+   "cls": "change_case:capital_word_frequency",
+   "prompt": "You need to create a question containing a blank (_), based on the given context word. Your question must contain two persons --PersonX and PersonY. The expected answer to your question must be Person",
+   "target": 3.0,
+   "rel": "exactly",
+   "grpo": {
+    "o": 14,
+    "ok": false,
+    "resp": "\"PERSONX, PERSONY, WOULD YOU BOTH _ THE NEW RULE? PERSONX, WOULD YOU _ THE NEW RULE?\""
+   },
+   "ptb": {
+    "o": 3,
+    "ok": true,
+    "resp": "\"**PERSONX, did you ACCEPT the challenge from PERSONY?**\""
+   }
+  },
+  {
+   "cls": "length_constraints:number_paragraphs",
+   "prompt": "Can you make an Excel formula that prints \" \" when the value is #div/0! and print the value when it's not\nPut the response into at least 4 sections, separated using 3 asterisks *** in your response.\nY",
+   "target": 4.0,
+   "rel": "exactly",
+   "grpo": {
+    "o": 3,
+    "ok": false,
+    "resp": "***\n**1.  Formula for Handling #DIV/0!**\n\n*   The formula to handle #DIV/0! is: \n    *   `= [placeholder] `\n\n**2.  Formula for Non- #DIV/0! Values**\n\n*   The formula to print the value when it's not #DIV/0! is: \n    *   `= [placeholder]`\n\n***\n\n***\n**3.  Explanation**\n\n*   The for"
+   },
+   "ptb": {
+    "o": 4,
+    "ok": true,
+    "resp": "***\n**Formula for Handling #DIV/0!**\n\n*  [Formula] = [Value] if [Condition] is false\n*  [Formula] = \" \" if [Condition] is true\n\n***\n**Explanation**\n\n*  The formula will check if the value is a #DIV/0! error. \n*  If it is, the formula will print \" \".\n\n***\n**How to Use the Formula*"
+   }
+  },
+  {
+   "cls": "length_constraints:number_words",
+   "prompt": "The input is a conversation between an automated system and a user looking for suggestions for pubs, restaurants and coffee shops in Cambridge. In the dialogue, the user may provide some criteria for ",
+   "target": 38.0,
+   "rel": "less than",
+   "grpo": {
+    "o": 39,
+    "ok": false,
+    "resp": "\"The user wants a pub with a television and internet connection. They are looking for the address, phone number and area of The Bakers. \"\nP.S. The user also asked for the price range and cuisine of the place. \n\""
+   },
+   "ptb": {
+    "o": 34,
+    "ok": true,
+    "resp": "\"You are looking for a pub with a television and internet connection. The Bakers is located at 176 East Road, Cambridge. The phone number is 01223304121.  P.S. I hope you enjoy your visit.\""
+   }
+  },
+  {
+   "cls": "detectable_content:number_placeholders",
+   "prompt": "Replace all the human names in the paragraph with <anonymized>. \nACM named Yoshua Bengio, Geoffrey Hinton, and Yann LeCun recipients of the 2018 ACM A.M. Turing Award for conceptual and engineering br",
+   "target": 3.0,
+   "rel": "at least",
+   "grpo": {
+    "o": 1,
+    "ok": false,
+    "resp": "<anonymized> Award Recipients\n\n[ACM] named <anonymized> <anonymized> and <anonymized> recipients of the 2018 <anonymized> A.M. Turing Award for conceptual and engineering breakthroughs that have made deep neural networks a critical component of computing."
+   },
+   "ptb": {
+    "o": 4,
+    "ok": true,
+    "resp": "<anonymized> Award Recipients [ACM]\n\n[Yoshua Bengio] [Geoffrey Hinton] [Yann LeCun]"
+   }
+  },
+  {
+   "cls": "keywords:frequency",
+   "prompt": "You are given a negative review and your task is to convert it to a positive review by one or more making minimal changes. Avoid changing the context of the review. \nneedless to say , i will not be re",
+   "target": 4.0,
+   "rel": "exactly",
+   "grpo": {
+    "o": 1,
+    "ok": false,
+    "resp": "this is a negative experience for me personally. \n\np.p.s \n\ni am not sure if i would recommend this place to others."
+   },
+   "ptb": {
+    "o": 4,
+    "ok": true,
+    "resp": "the negative experience i had here was pretty disappointing i really hope that the place will improve and not be negative again i dont think i will be returning to this place anytime soon because of the negative experience i had here\n\np.p.s i am not sure if i will ever be able to"
+   }
+  },
+  {
+   "cls": "detectable_format:number_bullet_lists",
+   "prompt": "Given two cocktail ingredients, write a recipe for a cocktail that uses them.  You may add more ingredients. \ngin and Campari\nPlease also include the keywords \"cocktail\" in the response.\nPlease reply ",
+   "target": 4.0,
+   "rel": "exactly",
+   "grpo": {
+    "o": 11,
+    "ok": false,
+    "resp": "Section 1\n*  GIN IS A LIGHT AND FRUITY LIQUOR THAT IS PERFECT FOR COCKTAILS.\n*  CAMPARI IS A BITTER AND COMPLEX AMARO THAT PROVIDES A UNIQUE FLAVOR PROFILE TO COCKTAILS.\n*  THE COMBINATION OF GIN AND CAMPARI IS A CLASSIC COCKTAIL.\n*  THE RECIPE IS A SIMPLE AND EASY TO FOLLOW.\n\nSe"
+   },
+   "ptb": {
+    "o": 4,
+    "ok": true,
+    "resp": "SECTION 1\nI AM A HELPFUL AND RESPECTFUL ASSISTANT. \n\nSECTION 2\nTHE RECIPE FOR A COCKTAIL USING GIN AND CAMPARI IS AS FOLLOWS:\n\n*  2 oz GIN\n*  1 oz CAMPARI\n*  0.5 oz LIME JUICE\n*  Garnish: ORANGE WEDGE\n\nSECTION 3\nI AM NOT SURE IF I CAN ANSWER YOUR QUESTION."
+   }
+  }
+ ],
+ "cases_nearmiss": [
+  {
+   "cls": "length_constraints:number_paragraphs",
+   "prompt": "How much wood would a woodchuck chuck if a woodchuck could chuck wood?\nAt least 1 sections should be highlighted with markdown such as *highlighted section*.\nPut the response into at least 2 sections,",
+   "target": 2.0,
+   "rel": "exactly",
+   "ptb": {
+    "o": 3,
+    "ok": false,
+    "resp": "\"This is a classic tongue twister!  There's no real answer, but a woodchuck would *chuck* as much wood as a woodchuck could *chuck* if a woodchuck could *chuck* wood.  ***It's a fun thought experiment!***\""
+   }
+  },
+  {
+   "cls": "keywords:existence",
+   "prompt": "Given a sequence of actions to navigate an agent in its environment, provide the correct command in a limited form of natural language that matches the sequence of actions when executed. Commands are ",
+   "target": 1.0,
+   "rel": "at least",
+   "ptb": {
+    "o": 0,
+    "ok": false,
+    "resp": "<command>\n<action>I_TURN_RIGHT</action>\n<action>I_TURN_RIGHT</action>\n<action>I_RUN</action>\n<action>I_TURN_RIGHT</action>\n<action>I_TURN_RIGHT</action>\n<action>I_RUN</action>\n<action>I_TURN_LEFT</action>\n<action>I_TURN_LEFT</action>\n</command>"
+   }
+  },
+  {
+   "cls": "length_constraints:number_words",
+   "prompt": "You are shown a random response (from a computer or a human). Generate a language query such that it leads to this reply. \nI'm heading to Club Salsa, and I need a taxi.\nDon't forget to include the key",
+   "target": 18.0,
+   "rel": "exactly",
+   "ptb": {
+    "o": 17,
+    "ok": false,
+    "resp": "SECTION 1 TRANSPORTATION\n\nSECTION 2  NEED A TAXI\n\nSECTION 3  CLUB SALSA\n\nSECTION 4  I'M HEADING"
+   }
+  }
+ ]
+}

@@ -1,1 +1,91 @@
-# proximity-tie-breaking
+# Proximity Tie-Breaking (PTB)
+
+Code, data, and per-run results for the IEEE Access submission
+**"Breaking Ties in Multi-Constraint Reinforcement Learning: Recovering
+Discarded Verifier Signal for Instruction Following"** (manuscript
+Access-2026-41673, resubmission).
+
+PTB ranks completions that received identical discrete rewards by a proximity
+measure recovered from the constraint verifiers, and perturbs the reward by
+that rank before group-relative standardization.
+
+## Repository map: paper claim → file
+
+| Paper item | Where to look |
+|---|---|
+| Reward wrapper: PTB, placebos, ablation modes (Sec. IV) | `code/reward_extension.py` (the exact module imported by all training runs) |
+| Matched placebo definition, seed 20260928 (Sec. V-H, R2-C4) | `code/reward_extension.py` (`mpl` branch) + `tests/test_matched_placebo.py` |
+| Verifier-consistent ablation (Sec. V, R2-C5) | `code/reward_extension.py` (`vc` branch) + `results/result_tb_vc_seed*.json` |
+| ε sensitivity (ε ∈ {0.025, 0.05, 0.10}) | `results/result_tb_e025_*` / `result_tb_e100_*` (mode `tie`, `TB_SCALE` env) |
+| Tables IV–VI, CIs, covariate, leave-one-out (Sec. V-I) | `stats/run_stats.py` on `results/per_class_rates.csv` → reproduces every reported estimate |
+| Boundary-distance analysis \|o − t\| (Sec. V-G, R1-C1a) | `stats/boundary_analysis.py` + `results/boundary_summary.json` |
+| Training-time intervention logs (Sec. V-G/H) | `logs/rwlog_*.jsonl` (one JSON record per intervention) |
+| Per-seed aggregate scores (Table IV) | `results/result_*.json` (`trained` → `ssr_macro`, `hsr`, `ntok_mean`) |
+| Per-class rates for every run | `results/per_class_rates.csv` |
+| Training/evaluation data (Assembled-500 held-out set, training set) | `data/train_3000.jsonl`, `data/test_500.jsonl` |
+
+## Reproducing the statistics (CPU, minutes)
+
+```bash
+pip install -r requirements.txt
+python stats/run_stats.py --loo      # Table VI estimates, CIs, permutation, covariate, LOO
+python tests/test_matched_placebo.py # matched-placebo multiset validation
+```
+
+`stats/run_stats.py` regenerates the pooled covered-minus-uncovered effect,
+the direct contrasts against both placebos (run-level random effects), the
+class-level permutation test, the baseline-difficulty covariate model, and the
+leave-one-out refits, from the shipped per-class rates alone.
+
+## Training
+
+Training was run on Google Colab (A100, ≈3 h per run). `code/` contains the
+reconstructed reward/registry modules and the evaluation pipeline;
+`code/reward_extension.py` wraps the reward function of the reproduced
+prior-work training script, selected per run via environment variables:
+
+```
+TB_MODE  = off | tie | placebo | mpl | vc | nz | ...   (see module docstring)
+TB_SCALE = 0.05 (default; 0.025 / 0.10 for the sensitivity runs)
+TB_PLACEBO_SEED = 20260928
+TB_LOG   = path for the intervention log (rwlog)
+```
+
+Raw per-response evaluation outputs (~600 MB) are not stored in this
+repository; the shipped `results/per_class_rates.csv` and summary JSONs are
+derived from them, and the raw files are available from the authors on
+request. `stats/boundary_analysis.py` documents exactly how the boundary
+summary was computed from those outputs.
+
+## Data provenance and deduplication
+
+- The training set (`data/train_3000.jsonl`) and the held-out Assembled-500
+  set (`data/test_500.jsonl`) were assembled by the authors following the
+  procedure in Sec. V-A; these are the exact files used in all experiments.
+  The original assembly script was not preserved; the data files are the
+  experimental originals (byte-identical to the training inputs).
+- The prior work's test set (MDP-500) is **not redistributed** here; obtain it
+  from the MDP-GRPO repository referenced below.
+- Deduplication: training and evaluation prompts were built from disjoint
+  seed-instruction pools; constrained prompts sharing an underlying seed
+  instruction appear only within one split. Known data imperfections
+  (contradictory constraint combinations; `combination:repeat_prompt`
+  behavior) are documented in the paper and retained as-is for fidelity.
+
+## Attribution
+
+- **MDP-GRPO** — the reproduced prior work. We used repository commit
+  `3b375080`; the reward/registry modules under `code/` are our
+  reconstruction (the originals were not fully released), validated by
+  matching per-class satisfaction rates and the published aggregate scores.
+- **IFEval** (Google Research, Apache-2.0) — constraint checkers
+  (`instructions_registry`) are used as released; see the IFEval repository.
+- **Alpaca** (Stanford, CC BY-NC 4.0) — upstream source of the instruction
+  data; the data files here inherit **CC BY-NC 4.0** (see `data/LICENSE-DATA`).
+- **TRL / Transformers** (Hugging Face) — training framework; versions in
+  `requirements.txt`.
+
+## License
+
+Code: MIT (see `LICENSE`). Data files under `data/`: CC BY-NC 4.0
+(Alpaca-derived; see `data/LICENSE-DATA`).
