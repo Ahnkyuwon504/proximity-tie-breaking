@@ -1,3 +1,7 @@
+# LEGACY SCOPE NOTE: this script produced the earlier three-benchmark-pooled
+# boundary summary (now under results/legacy/). The main Sec. V-G analysis
+# uses the shared-two-set per-instance path: stats/export_boundary_instances.py
+# -> results/boundary_instances.csv.gz -> results/boundary_failed_breakdown.json
 #!/usr/bin/env python3
 """Boundary-distance analysis (Sec. V-G; Reviewer 1, Concern 1a).
 

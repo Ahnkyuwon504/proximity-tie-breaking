@@ -1,6 +1,6 @@
 {
  "LICENSE": "4fa9a00b6c0a54163e02440a675dea271fadd6a48d7f5117c6a70478b2d18124",
- "README.md": "f5e485f2313263dad5932e2d09e62c6d29ff3c6963eb81e8388ba4749eb27335",
+ "README.md": "fafe6b4626f8dcd0b79b70d5b1df31bf3dfcfd7cfc4d9d69ec4557b073f36ac9",
  "code/eval_pipeline.py": "0184ef2fb63e3509cb0b26254b9c81ceb945bf8ebd8fea941827fac11b0232bd",
  "code/figures.py": "399f6a07979219b15fd78f6eacb66beacc3310bf555c616b256406300e3d046b",
  "code/reward_extension.py": "832ce384fa164a1decaaf1e7262d95fb8da8e268883c604637412dd8ee066a9d",
@@ -70,7 +70,8 @@
  "requirements.txt": "9a3ea96dc79ce80aad82573ff8b50432387b787f79eb795432905cb04377654c",
  "results/boundary_failed_breakdown.json": "d0b28c4014d8528fc468600f23cbac9e35daadd534cd2d4d6ad1af7410a5624d",
  "results/boundary_instances.csv.gz": "2d99e584b26cd8cb9f5e382dbd7c8d6cbb155279400da3aaab43fc82887c06e5",
- "results/boundary_summary.json": "cd0bab8d077b9be0159970231e224a4d026703474bb33f0c8e9b0611a64d2f3c",
+ "results/legacy/README.md": "8ba68833837bd4119d6a954518a03db15e0306ca776c5beae88187e8849ceec1",
+ "results/legacy/boundary_summary_three_sets.json": "cd0bab8d077b9be0159970231e224a4d026703474bb33f0c8e9b0611a64d2f3c",
  "results/length_truncation_summary.json": "49457da34117d52973740cf25eba177c6435e7e577470c598e788a18ee867ce6",
  "results/per_class_rates.csv": "d1b3ccba9068c66d89b160b9b1a57d7184ec5b7d42a70d5f2106d40a1c316ea5",
  "results/result_da_half_seed42.json": "e5969c8e4cdcb78b9126c72d4839706669f1b9c245526bf2e7df392f49f0e206",
@@ -171,12 +172,12 @@
  "results/result_tb_vc_seed44.json": "b64bd9ed57c6b3557a593cc9ecc3d4685ff5434c692654555119889652b0cbeb",
  "results/result_w_adapt_seed42.json": "ba46054ccb9318087c77724ef4eb93208727a35819184fc5920fe0cddd889cce",
  "results/summary_for_paper.json": "06ba786b890a945559b654e26907209f273e7a05ba92c60e6f401f5862417d06",
- "stats/boundary_analysis.py": "dd0b0b09db56b059038eef44d71f635cb5cda56e16af63d1c80391b26b26957c",
- "stats/diff_test_v4_regenerated.json": "be9e159ba4efa0e027b715acfaab0a86eeeb3fd69bd0e52234e3c32bb06cace3",
+ "stats/boundary_analysis.py": "4c7f3c6245a3cb00e7f60987a6433dfa8d2e71acd85b620927359c78944ecbdd",
+ "stats/diff_test_v4_regenerated.json": "cc359ee8ed9d5876252a83c803857c56990c90d0cbeaf799dff745605e5beca2",
  "stats/export_boundary_instances.py": "5e1c45afd6d35ae5dbd5df0844c23c0898d203313814c117b6eade46781a60df",
  "stats/length_truncation.py": "b5d70fc9b28c85529a5376781b0156e4b837340a34a4d3aa60eff49f9b589b97",
  "stats/reference/diff_test_v4.json": "06fc51c0e2a35cc68f691d7c7e2f8e3793a31252031834ce768a233a42b05df7",
  "stats/reference/sensitivity_ci_loo.json": "0a2779673a1cc4d36afd6f03038720e1a2e614630778188ce12522d4861e4578",
- "stats/run_stats.py": "4dcd616407aa48f46d005767e68cf5f71d4fc126812206b72585a7c612a31ec7",
+ "stats/run_stats.py": "c132be41ec5ecbb7e4c0fd80175cd4437f2a500607d0f2e22af61243ace09a61",
  "tests/test_matched_placebo.py": "761d2006e21e9dffe06c847e2be786de765db66eaab3048d56b7eaaf8b96e8e1"
 }

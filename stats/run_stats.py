@@ -219,6 +219,20 @@ def main():
         out["checkpoint_level_model_loo"].append({"excluded":drop_mk,"b":round(e2,4),"ci95":[round(c2[0],3),round(c2[1],3)],"p":round(p2v,4)})
         print(f"  excl {drop_mk:10s} b {e2:+.4f}  ci [{c2[0]:.3f},{c2[1]:.3f}]  p {p2v:.4f}")
 
+    # [2f] standalone PTB-GRPO coverage differential, same checkpoint-level design
+    print("\n[2f] checkpoint-level PTB-GRPO coverage differential (same design)")
+    G2=ckd("grpo")
+    dm_g=[];vt_g=[];nus_g=[]
+    for mk in mods:
+        a=[v for (m,_),v in P2.items() if m==mk]; b=[v for (m,_),v in G2.items() if m==mk]
+        dm_g.append(_s.mean(a)-_s.mean(b)); vt_g.append(_s.variance(a)/len(a)+_s.variance(b)/len(b))
+        va=_s.variance(a)/len(a); vb=_s.variance(b)/len(b)
+        nus_g.append((va+vb)**2/(va*va/(len(a)-1)+vb*vb/(len(b)-1)))
+    eg,sg,dg,cg,pg=ws_ci(dm_g,vt_g,nus_g)
+    out["checkpoint_level_grpo"]={"b":round(eg,4),"se":round(sg,4),"df_welch_satterthwaite":round(dg,2),
+        "ci95":[round(cg[0],3),round(cg[1],3)],"p":round(pg,5)}
+    print(f"  b {eg:+.4f}  se {sg:.4f}  df {dg:.2f}  ci [{cg[0]:.3f},{cg[1]:.3f}]  p {pg:.5f}")
+
     # 3) permutation test: coverage labels permuted at the class level, jointly
     #    across all cells (exchangeable under the null; see Section V-I)
     print(f"\n[3] permutation ({args.perm} draws, labels shared across cells)")
