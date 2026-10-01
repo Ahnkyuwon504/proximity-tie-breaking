@@ -91,3 +91,15 @@ summary was computed from those outputs.
 
 Code: MIT (see `LICENSE`). Data files under `data/`: CC BY-NC 4.0
 (Alpaca-derived; see `data/LICENSE-DATA`).
+
+
+## Full training/evaluation (original Colab notebooks)
+The training and evaluation code in `code/` is extracted from the original Colab notebooks and is not a
+standalone CLI: `eval_pipeline.py` expects `THEIR_EVAL`/`OUR_EVAL` dataset paths and the model registry
+defined by `setup_and_reconstructed_modules.py`, executed first in the same session. Original execution
+order per run: (1) install the pinned stack from `requirements.txt`; (2) run `setup_and_reconstructed_modules.py`
+(model registry, TRL-fork checkout at the commits listed there and in `requirements.txt`); (3) run
+`reward_extension.py` to wrap the reward; (4) launch training via the prior work's `train.py` with the
+variant arguments documented in the paper; (5) run `eval_pipeline.py` for MDP-500/Assembled-500 and the
+IFEval path with the dataset paths set as above. The statistics under `stats/` regenerate from shipped
+inputs on CPU and do not require this environment.

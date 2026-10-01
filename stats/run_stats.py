@@ -36,7 +36,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import warnings
 
-warnings.filterwarnings("ignore")
+# warnings are left visible; convergence diagnostics are stored per fit
 
 # The 11 covered classes (Table VII; identical to the labels used by the
 # verifier implementation in code/reward_extension.py).
@@ -198,10 +198,26 @@ def main():
     for mk in mods:
         a=[v for (m,_),v in P2.items() if m==mk]; b=[v for (m,_),v in M2.items() if m==mk]
         dm.append(_s.mean(a)-_s.mean(b)); vt.append(_s.variance(a)/len(a)+_s.variance(b)/len(b))
-    est=sum(dm)/len(mods); se=(sum(vt)**0.5)/len(mods); dfq=8
-    tc=_st.t.ppf(0.975,dfq); pv=2*(1-_st.t.cdf(abs(est/se),dfq))
-    out["checkpoint_level"]={"b":round(est,4),"se":round(se,4),"ci95":[round(est-tc*se,3),round(est+tc*se,3)],"p":round(pv,4),"df":dfq}
-    print(f"  b {est:+.4f}  se {se:.4f}  ci {out['checkpoint_level']['ci95']}  p {pv:.4f}")
+    def ws_ci(dm_l, vt_l, nu_l):
+        k=len(dm_l); est=sum(dm_l)/k; var=sum(vt_l)/(k*k); se=var**0.5
+        dfq=(sum(vt_l))**2/sum(v*v/nu for v,nu in zip(vt_l,nu_l))
+        tc=_st.t.ppf(0.975,dfq); pv=2*(1-_st.t.cdf(abs(est/se),dfq))
+        return est,se,dfq,[est-tc*se,est+tc*se],pv
+    nus=[]
+    for mk in mods:
+        a=[v for (m,_),v in P2.items() if m==mk]; b=[v for (m,_),v in M2.items() if m==mk]
+        va=_s.variance(a)/len(a); vb=_s.variance(b)/len(b)
+        nus.append((va+vb)**2/(va*va/(len(a)-1)+vb*vb/(len(b)-1)))
+    est,se,dfq,ci,pv=ws_ci(dm,vt,nus)
+    out["checkpoint_level"]={"b":round(est,4),"se":round(se,4),"df_welch_satterthwaite":round(dfq,2),
+        "ci95":[round(ci[0],3),round(ci[1],3)],"p":round(pv,5)}
+    print(f"  b {est:+.4f}  se {se:.4f}  df {dfq:.2f}  ci [{ci[0]:.3f},{ci[1]:.3f}]  p {pv:.5f}")
+    out["checkpoint_level_model_loo"]=[]
+    for drop_mk in mods:
+        keep=[i for i,mk in enumerate(mods) if mk!=drop_mk]
+        e2,s2,d2,c2,p2v=ws_ci([dm[i] for i in keep],[vt[i] for i in keep],[nus[i] for i in keep])
+        out["checkpoint_level_model_loo"].append({"excluded":drop_mk,"b":round(e2,4),"ci95":[round(c2[0],3),round(c2[1],3)],"p":round(p2v,4)})
+        print(f"  excl {drop_mk:10s} b {e2:+.4f}  ci [{c2[0]:.3f},{c2[1]:.3f}]  p {p2v:.4f}")
 
     # 3) permutation test: coverage labels permuted at the class level, jointly
     #    across all cells (exchangeable under the null; see Section V-I)
