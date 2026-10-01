@@ -2,5 +2,8 @@
 pandas>=2.0
 numpy>=1.24
 statsmodels>=0.14
-# Training (Colab; versions used in the experiments)
-# trl==0.9.6, transformers==4.43.3, vllm==0.5.4  -- see paper Sec. V-B
+# Training (Colab A100; stack actually used in the experiments — see paper Sec. V-D)
+# torch==2.8.0+cu128, transformers==4.57.1, peft==0.17.1, accelerate==1.11.0,
+# vllm==0.10.2, datasets==4.8.5, mlflow==3.7.0, numpy==2.2.6
+# TRL: authors' fork https://github.com/m-salmani78/trl — base commit 0d5711040e2481fb83d579910ae9bf565fa6c145,
+# with trl/trainer/grpo_trainer.py and grpo_config.py taken from commit 3b375080 (install with pip install --no-deps .)

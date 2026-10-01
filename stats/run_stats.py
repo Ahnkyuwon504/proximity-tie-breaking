@@ -160,6 +160,49 @@ def main():
         out["pooled_optimizers"].append(r)
         print(f"  {meth:6s} b {r['b']:+.3f}  se {r['se']:.3f}  z {r['z']:+.2f}  p {r['p']:.5f}  converged={r['converged']}")
 
+    # 2d) failures-fixed: per class, instances pooled over the two in-distribution sets
+    print("\n[2d] failures fixed (pinned rule)")
+    two=[s for s in df["dataset"].unique() if "ifeval" not in str(s).lower()]
+    raw2=pd.read_csv(csv_path); raw2=raw2[(raw2["n"]>=5)&(raw2["set"].isin(two))]
+    def pooledrate(v):
+        d=raw2[raw2["variant"]==v]
+        return d.groupby("cid").apply(lambda x:(x["rate"]*x["n"]).sum()/x["n"].sum())
+    gp,tp=pooledrate("grpo"),pooledrate("tb_tie")
+    cov=[];unc=[]
+    for cid in gp.index:
+        if cid in tp.index and gp[cid]<100:
+            ( cov if cid in COVERED else unc ).append((tp[cid]-gp[cid])/(100-gp[cid])*100)
+    out["failures_fixed"]={"covered":round(sum(cov)/len(cov),2),"uncovered":round(sum(unc)/len(unc),2),"n_classes":[len(cov),len(unc)]}
+    print(f"  covered {out['failures_fixed']['covered']}%  uncovered {out['failures_fixed']['uncovered']}%")
+
+    # 2e) checkpoint-level contrast, free of the nesting structure
+    print("\n[2e] checkpoint-level PTB vs tb_mplacebo (two shared benchmarks)")
+    import scipy.stats as _st
+    sub2=raw2[raw2["variant"].isin(["grpo","tb_tie","tb_mplacebo"])]
+    def ckd(v):
+        o={}
+        for (mk,sd),g in sub2[sub2["variant"]==v].groupby(["model","seed"]):
+            vals=[]
+            for s,g2 in g.groupby("set"):
+                base=sub2[(sub2["variant"]=="grpo")&(sub2["model"]==mk)&(sub2["set"]==s)].groupby("cid")["rate"].mean()
+                c=[];u=[]
+                for _,r in g2.iterrows():
+                    if r["cid"] in base.index:
+                        (c if r["cid"] in COVERED else u).append(r["rate"]-base[r["cid"]])
+                if c and u: vals.append(sum(c)/len(c)-sum(u)/len(u))
+            if vals: o[(mk,sd)]=sum(vals)/len(vals)
+        return o
+    import statistics as _s
+    P2,M2=ckd("tb_tie"),ckd("tb_mplacebo")
+    mods=sorted(set(m for m,_ in P2)); dm=[];vt=[]
+    for mk in mods:
+        a=[v for (m,_),v in P2.items() if m==mk]; b=[v for (m,_),v in M2.items() if m==mk]
+        dm.append(_s.mean(a)-_s.mean(b)); vt.append(_s.variance(a)/len(a)+_s.variance(b)/len(b))
+    est=sum(dm)/len(mods); se=(sum(vt)**0.5)/len(mods); dfq=8
+    tc=_st.t.ppf(0.975,dfq); pv=2*(1-_st.t.cdf(abs(est/se),dfq))
+    out["checkpoint_level"]={"b":round(est,4),"se":round(se,4),"ci95":[round(est-tc*se,3),round(est+tc*se,3)],"p":round(pv,4),"df":dfq}
+    print(f"  b {est:+.4f}  se {se:.4f}  ci {out['checkpoint_level']['ci95']}  p {pv:.4f}")
+
     # 3) permutation test: coverage labels permuted at the class level, jointly
     #    across all cells (exchangeable under the null; see Section V-I)
     print(f"\n[3] permutation ({args.perm} draws, labels shared across cells)")
