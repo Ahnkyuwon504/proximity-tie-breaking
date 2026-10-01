@@ -125,21 +125,27 @@ and do not require this environment.
    `git checkout 0d5711040e2481fb83d579910ae9bf565fa6c145`
    `git checkout 3b375080d799c1a7224de19d37e548a2ed2aa390 -- trl/trainer/grpo_trainer.py trl/trainer/grpo_config.py`
    `pip install --no-deps .`
+   The preserved application snapshot is available from the authors on
+   request and verifies against `upstream_snapshot_sha256.json`.
    Then run
    `setup_and_reconstructed_modules.py` (model registry; checkpoint IDs are
    pinned by name, and per-model revision hashes were not separately
    recorded).
-4. Wire the reward wrapper as in the original session: back up the upstream
-   `training/reward_function.py` as `reward_function_orig.py` in the same
-   directory, then install the wrapper module so that it is imported as
-   `reward_function` (the original notebook writes the generated wrapper
-   over `training/reward_function.py`; `code/reward_extension.py` imports
-   `reward_function_orig`, and the upstream `train.py` then picks up the
+4. Wire the reward wrapper as in the original session. The setup step
+   copies the upstream `training/` into the active execution directory
+   `LOCAL_TRN` (`/content/training`); install the wrapper there, not only
+   in the source snapshot. Back up `LOCAL_TRN/reward_function.py` as
+   `LOCAL_TRN/reward_function_orig.py`, then install the wrapper module so
+   that it is imported as `reward_function` (the original notebook writes
+   the generated wrapper over `LOCAL_TRN/reward_function.py`;
+   `code/reward_extension.py` imports `reward_function_orig`, and
+   `train.py`, launched from that same directory, then picks up the
    wrapped class via `from reward_function import
-   InstructionFollowingReward`). Preflight before training: in a fresh
-   process, import `reward_function` and check that the reward class's MRO
-   contains the wrapper mixin and that `TB_MODE` is read from the
-   environment. Per-run variant settings (result-file label -> environment):
+   InstructionFollowingReward`). Preflight before training: run
+   `code/reward_import_preflight.py --training-dir /content/training`,
+   which checks in a fresh process per mode that the resolved class's MRO
+   contains the wrapper mixin (module-level environment settings are read
+   at import time). Per-run variant settings (result-file label -> environment):
    - `grpo`: `TB_MODE=off`
    - `tb_tie` (PTB): `TB_MODE=tie`, `TB_SCALE=0.05`
    - `tb_e025` / `tb_e100`: `TB_MODE=tie`, `TB_SCALE=0.025` / `0.10`
@@ -154,8 +160,10 @@ and do not require this environment.
    `tb_mplacebo` / `tb_vc` / `tb_e025` / `tb_e100`: these runs reuse the
    `tb_tie` launcher entry with the environment variables above, and the
    label only names the result files.
-5. Launch training via the prior work's `train.py` (commit `3b375080`) with
-   the configuration of Sec. V-D.
+5. Launch `train.py` from the application snapshot prepared in step 3 —
+   the active copy described in step 4 — with the configuration of
+   Sec. V-D; the TRL base and trainer-file revisions are separate
+   dependencies recorded in step 3.
 6. Run `eval_pipeline.py` with `THEIR_EVAL`/`OUR_EVAL` dataset paths for
    MDP-500 / Assembled-500 and the IFEval path; evaluation prompting is
    defined there.

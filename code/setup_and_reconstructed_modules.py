@@ -241,8 +241,12 @@ if not os.path.isfile(PATHS["ourtest"]):
 if not (PATHS["spare"] and os.path.isfile(PATHS["spare"])):
     PATHS["spare"] = None  # optional; unused in the paper's experiments
 for k, p in PATHS.items():
-    assert os.path.exists(p), f"missing: {p}"
-    print(f"  {k:8s} {len(read_jsonl(p)):5d} rows" if p else f"  {k:8s} (not shipped; optional)")
+    if p is None:
+        print(f"  {k:8s} (not shipped; optional)")
+        continue
+    if not os.path.isfile(p):
+        raise FileNotFoundError(f"missing required split {k}: {p}")
+    print(f"  {k:8s} {len(read_jsonl(p)):5d} rows")
 THEIR_ROWS = read_jsonl(THEIR_EVAL)
 TRAIN_FILE, OUR_EVAL = PATHS["train"], PATHS["ourtest"]
 
