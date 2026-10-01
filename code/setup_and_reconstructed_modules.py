@@ -231,9 +231,18 @@ def read_jsonl(p):
 PATHS = {k: os.path.join(DATA_DIR, f) for k, f in
          [("train", "train_3000.jsonl"), ("ourtest", "ourtest_500.jsonl"),
           ("spare", "spare_1500.jsonl")]}
+# Release-path resolution: the shipped archive names the held-out split
+# test_500.jsonl (the original session used ourtest_500.jsonl) and does not
+# ship the unused spare split.
+if not os.path.isfile(PATHS["ourtest"]):
+    _alt = os.path.join(os.path.dirname(PATHS["ourtest"]), "test_500.jsonl")
+    if os.path.isfile(_alt):
+        PATHS["ourtest"] = _alt
+if not (PATHS["spare"] and os.path.isfile(PATHS["spare"])):
+    PATHS["spare"] = None  # optional; unused in the paper's experiments
 for k, p in PATHS.items():
     assert os.path.exists(p), f"missing: {p}"
-    print(f"  {k:8s} {len(read_jsonl(p)):5d} rows")
+    print(f"  {k:8s} {len(read_jsonl(p)):5d} rows" if p else f"  {k:8s} (not shipped; optional)")
 THEIR_ROWS = read_jsonl(THEIR_EVAL)
 TRAIN_FILE, OUR_EVAL = PATHS["train"], PATHS["ourtest"]
 

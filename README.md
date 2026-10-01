@@ -77,8 +77,11 @@ is the legacy three-set path (see `results/legacy/`).
 
 ## Attribution
 
-- **MDP-GRPO** — the reproduced prior work. We used repository commit
-  `3b375080`; the reward/registry modules under `code/` are our
+- **MDP-GRPO** — the reproduced prior work. We used a main-branch ZIP
+  snapshot of the application repository (2026-08-03; per-file SHA256 in
+  `upstream_snapshot_sha256.json`) and its separate TRL fork at base
+  `0d5711040e24` with the two trainer files of fork commit `3b375080`; the
+  reward/registry modules under `code/` are our
   reconstruction (the originals were not fully released), validated by
   matching per-class satisfaction rates and the published aggregate scores.
 - **IFEval** (Google Research, Apache-2.0) — constraint checkers
@@ -110,17 +113,33 @@ and do not require this environment.
    installed in Colab explicitly: `pip install torch==2.8.0
    transformers==4.57.1 peft==0.17.1 vllm==0.10.2 datasets==4.8.5
    mlflow==3.7.0`.
-3. Clone the MDP-GRPO repository (see Attribution) into
-   `WORK_ROOT/MDP-GRPO-main` and check out commit `3b375080`:
-   `setup_and_reconstructed_modules.py` asserts that this checkout exists; it
-   does not clone it. The TRL fork is the one referenced by that repository
-   (base commit `0d5711040e24` plus the two author-modified files at
-   `3b375080`), installed with `pip install -e`. Then run
+3. Place the MDP-GRPO application code at `WORK_ROOT/MDP-GRPO-main`:
+   `setup_and_reconstructed_modules.py` asserts that this directory exists;
+   it does not clone it. We used a main-branch ZIP snapshot (downloaded
+   2026-08-03; the application repository's commit hash was not recorded -
+   per-file SHA256 of the preserved snapshot is in
+   `upstream_snapshot_sha256.json`; `3b375080` is a commit of the separate
+   TRL fork, not of the application repository). Install the TRL fork
+   exactly as used:
+   `git clone https://github.com/m-salmani78/trl.git && cd trl`
+   `git checkout 0d5711040e2481fb83d579910ae9bf565fa6c145`
+   `git checkout 3b375080d799c1a7224de19d37e548a2ed2aa390 -- trl/trainer/grpo_trainer.py trl/trainer/grpo_config.py`
+   `pip install --no-deps .`
+   Then run
    `setup_and_reconstructed_modules.py` (model registry; checkpoint IDs are
    pinned by name, and per-model revision hashes were not separately
    recorded).
-4. Run `reward_extension.py` to wrap the reward. Per-run variant settings
-   (result-file label -> environment):
+4. Wire the reward wrapper as in the original session: back up the upstream
+   `training/reward_function.py` as `reward_function_orig.py` in the same
+   directory, then install the wrapper module so that it is imported as
+   `reward_function` (the original notebook writes the generated wrapper
+   over `training/reward_function.py`; `code/reward_extension.py` imports
+   `reward_function_orig`, and the upstream `train.py` then picks up the
+   wrapped class via `from reward_function import
+   InstructionFollowingReward`). Preflight before training: in a fresh
+   process, import `reward_function` and check that the reward class's MRO
+   contains the wrapper mixin and that `TB_MODE` is read from the
+   environment. Per-run variant settings (result-file label -> environment):
    - `grpo`: `TB_MODE=off`
    - `tb_tie` (PTB): `TB_MODE=tie`, `TB_SCALE=0.05`
    - `tb_e025` / `tb_e100`: `TB_MODE=tie`, `TB_SCALE=0.025` / `0.10`

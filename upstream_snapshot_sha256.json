@@ -1,0 +1,25 @@
+{
+ "source": "https://github.com/m-salmani78/MDP-GRPO",
+ "provenance": "main-branch ZIP snapshot downloaded 2026-08-03 and preserved by the authors; the application repository's commit hash was not recorded. The hash 3b375080 is a commit of the separate TRL fork (m-salmani78/trl), not of this repository.",
+ "files": {
+  ".gitignore": "ce3bdff442ad8273e3675223011b2340677dcf65cc8c930f06085f45d0ad7578",
+  "LICENSE": "8c50530de2b7d7f05540d3b5280b49b6c0fda290c73862ed1d871143889e5483",
+  "README.md": "42eb9d268b6ea4a49a7de7485787c3d92994363b63eabebe6d552bdd92d23de3",
+  "data/data_test.jsonl": "b1171425a0b33b1b893c0cc4fc87d6dccd5630485a0ad9ebff46d70ec7a23cb7",
+  "full_pipeline.sh": "cd95a4946e4082d362792da2d41fa0dea251f1c1293b4ca639d0b90e72a2ea1b",
+  "requirements.txt": "c25fb8f83f98c39102af682334ac71b49b16d98fbbf25138c18349ab6e3ca63a",
+  "scripts/check.sh": "8cd4c51b995260d9e24edd1a7607fce9636fd6c260a79a089b6d546f07e2be61",
+  "scripts/do_inference.sh": "0f32050329c6646ceb6f0d674526ddd817567e2be937b1f1d851fe16d887c39b",
+  "src/__pycache__/check.cpython-312.pyc": "e45e1a1e7e080d1ede1e71505e66041f5873382ac806c0dcbd31bb8b4f3ead46",
+  "src/__pycache__/instructions.cpython-312.pyc": "6cc09d9a3d5d9900a35752295bac3f3795c45dbae4fe81797955eb7979bbfc1a",
+  "src/__pycache__/instructions_util.cpython-312.pyc": "cfeeb78696628321ddb0a39e58b7509072c5bfc8a9a241073d0d54945a0c00ce",
+  "src/check.py": "4202938c1da1df6d2d96b25b16b337798d047f8c7ef88797694d9b59e65331d5",
+  "src/do_inference.py": "27884a48d25e68d1e4811fef101cc93b9fcbcc2875a8498c5d9e116435ee31e8",
+  "src/instructions.py": "ecd156e45a5af9faf593c3e0043f4bbae4fc10c0ebeaec0dfa296530356e8151",
+  "src/instructions_util.py": "f4802c90635cefe47fe7320f90527dd424635ef707a7272703f7afecf2fa1695",
+  "training/merge_model.py": "a2d0c98135b7b1f030721477c0105858d75dfe999a8163a3509d2d8243e6fa22",
+  "training/prepare_grpo_data.py": "1ef773efb9c52c49e8233c641621efe6fb9b5b1984a70195d60df0fd1b8e456b",
+  "training/reward_function.py": "636784f9d4c9b98cee9cf79bd964076707f27b9969af433201984a3a8febb751",
+  "training/train.py": "8911ca09f9c2149f0efdea92daa0b2c2442478f4a23026d8ba03f09720f7d3f8"
+ }
+}
