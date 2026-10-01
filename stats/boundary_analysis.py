@@ -134,6 +134,7 @@ for _d in (_args.check_dir,):
 def scan(var, seeds=(42, 43, 44, 45, 46)):
     """Collect per-constraint-instance relative misses and raw material for the case studies."""
     stats = collections.defaultdict(list)   # 'exact'/'atleast' -> list of rel_err
+    stats_f = collections.defaultdict(list)  # same, restricted to instances whose verifier failed
     sat_ct = collections.Counter(); rec_by_prompt = {}
     n_resp = 0; miss_kw = 0; schema_warned = False
     for sd in seeds:
@@ -165,17 +166,19 @@ def scan(var, seeds=(42, 43, 44, 45, 46)):
                     rel_l = str(rel or 'exactly').lower()
                     kind = 'exact' if rel_l in ('exactly', '') else ('atleast' if 'least' in rel_l or 'more' in rel_l else 'atmost')
                     stats[kind].append(e)
+                    if not ok:
+                        stats_f[kind].append(e)
                     sat_ct[(iid, bool(ok))] += 1
                     if sd == 42:
                         rec_by_prompt.setdefault(pr, []).append(
                             dict(iid=iid, o=ov, t=tv, rel=rel, ok=bool(ok), approx=approx,
                                  resp=resp[:280]))
-    return stats, sat_ct, rec_by_prompt, n_resp, miss_kw
+    return stats, stats_f, sat_ct, rec_by_prompt, n_resp, miss_kw
 
-outG = {'note': 'word/sentence observations are approximate (approx=True); |o-t| distribution narrative only'}
+outG = {'note': 'word/sentence observations are approximate (approx=True); |o-t| distribution narrative only; boundary_failed restricts to constraint instances whose verifier failed'}
 scans = {}
 for var in ('grpo', 'tb_tie', 'tb_mplacebo'):
-    stats, sat_ct, recs, n_resp, miss_kw = scan(var)
+    stats, stats_f, sat_ct, recs, n_resp, miss_kw = scan(var)
     scans[var] = recs
     row = {}
     for kind, es in stats.items():
@@ -185,10 +188,20 @@ for var in ('grpo', 'tb_tie', 'tb_mplacebo'):
                          within10=round(100*sum(1 for e in es if e <= 0.10)/len(es), 1),
                          within25=round(100*sum(1 for e in es if e <= 0.25)/len(es), 1),
                          med_rel_err=round(es_s[len(es_s)//2], 3))
-    outG[var] = dict(responses=n_resp, kw_miss=miss_kw, boundary=row)
+    row_f = {}
+    for kind, es in stats_f.items():
+        if not es: continue
+        es_s = sorted(es)
+        row_f[kind] = dict(n=len(es), exact_hit=round(100*sum(1 for e in es if e == 0)/len(es), 1),
+                           within10=round(100*sum(1 for e in es if e <= 0.10)/len(es), 1),
+                           within25=round(100*sum(1 for e in es if e <= 0.25)/len(es), 1),
+                           med_rel_err=round(es_s[len(es_s)//2], 3))
+    outG[var] = dict(responses=n_resp, kw_miss=miss_kw, boundary=row, boundary_failed=row_f)
     print(f'== {var:12s} responses {n_resp} (kwargs unmatched {miss_kw})')
     for kind, v in row.items():
         print(f'    {kind:8s} n={v["n"]:>5}  exact {v["exact_hit"]}%  within10 {v["within10"]}%  within25 {v["within25"]}%  median_rel_err {v["med_rel_err"]}')
+    for kind, v in row_f.items():
+        print(f'    FAILED {kind:8s} n={v["n"]:>5}  exact {v["exact_hit"]}%  within10 {v["within10"]}%  within25 {v["within25"]}%  median_rel_err {v["med_rel_err"]}')
 
 # --- 2) representative cases: same prompt (seed 42), GRPO fails -> PTB succeeds (diverse classes, up to 6) ---
 cases, used_cls = [], set()

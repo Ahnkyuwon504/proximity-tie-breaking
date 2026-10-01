@@ -135,6 +135,31 @@ def main():
         out["interaction_run"].append(dict(versus=other, **r))
         print(f"  vs {other:12s} b {r['b']:+.3f}  z {r['z']:+.2f}  p {r['p']:.5f}  ci95 {r['ci95']}")
 
+    # 2b) sensitivity: interaction vs tb_mplacebo on the two common benchmarks only
+    print("\n[2b] interaction vs tb_mplacebo, restricted to the two common sets (no ifeval)")
+    sub0 = df[df["var"].isin(["tb_tie", "tb_mplacebo"])].copy()
+    sub0 = sub0[~sub0["dataset"].astype(str).str.lower().str.contains("ifeval")]
+    if sub0["var"].nunique() == 2:
+        sub0["is_tie"] = (sub0["var"] == "tb_tie").astype(int)
+        fit = fit_pooled(sub0, "delta ~ prox * is_tie", {"run": "0 + C(run)", "cid": "0 + C(cid)"})
+        r = report(fit, "prox:is_tie")
+        out["interaction_run_common2"] = r
+        print(f"  b {r['b']:+.3f}  se {r['se']:.3f}  z {r['z']:+.2f}  p {r['p']:.5f}")
+
+    # 2c) sensitivity: pooled tb_tie estimate under alternative optimizers
+    print("\n[2c] pooled tb_tie (delta ~ covered) under alternative optimizers")
+    out["pooled_optimizers"] = []
+    sub1 = df[df["var"] == "tb_tie"].copy()
+    sub1["grp"] = sub1["model"] + "_" + sub1["dataset"]
+    for meth in ("lbfgs", "bfgs", "powell", "cg"):
+        fitm = smf.mixedlm("delta ~ prox", sub1, groups=sub1["grp"],
+                           vc_formula={"seed": "0 + C(seed)", "cid": "0 + C(cid)"}
+                           ).fit(reml=True, method=meth)
+        r = report(fitm, "prox")
+        r["optimizer"] = meth; r["converged"] = bool(fitm.converged)
+        out["pooled_optimizers"].append(r)
+        print(f"  {meth:6s} b {r['b']:+.3f}  se {r['se']:.3f}  z {r['z']:+.2f}  p {r['p']:.5f}  converged={r['converged']}")
+
     # 3) permutation test: coverage labels permuted at the class level, jointly
     #    across all cells (exchangeable under the null; see Section V-I)
     print(f"\n[3] permutation ({args.perm} draws, labels shared across cells)")
