@@ -1,5 +1,5 @@
 {
- "note": "words/sentences 관측은 근사(approx=True) — 수치는 |o−t| 분포 서사용",
+ "note": "word/sentence observations are approximate (approx=True); |o-t| distribution narrative only; boundary_failed restricts to constraint instances whose verifier failed",
  "grpo": {
   "responses": 7701,
   "kw_miss": 0,
@@ -24,6 +24,29 @@
     "within10": 6.9,
     "within25": 14.9,
     "med_rel_err": 0.786
+   }
+  },
+  "boundary_failed": {
+   "exact": {
+    "n": 1514,
+    "exact_hit": 1.3,
+    "within10": 2.7,
+    "within25": 12.9,
+    "med_rel_err": 0.8
+   },
+   "atmost": {
+    "n": 740,
+    "exact_hit": 5.4,
+    "within10": 8.1,
+    "within25": 15.7,
+    "med_rel_err": 1.333
+   },
+   "atleast": {
+    "n": 1094,
+    "exact_hit": 2.6,
+    "within10": 5.5,
+    "within25": 17.6,
+    "med_rel_err": 0.592
    }
   }
  },
@@ -52,6 +75,29 @@
     "within25": 16.9,
     "med_rel_err": 0.71
    }
+  },
+  "boundary_failed": {
+   "exact": {
+    "n": 1438,
+    "exact_hit": 1.1,
+    "within10": 3.2,
+    "within25": 15.3,
+    "med_rel_err": 0.667
+   },
+   "atleast": {
+    "n": 979,
+    "exact_hit": 4.1,
+    "within10": 8.4,
+    "within25": 21.8,
+    "med_rel_err": 0.5
+   },
+   "atmost": {
+    "n": 695,
+    "exact_hit": 6.2,
+    "within10": 9.2,
+    "within25": 17.3,
+    "med_rel_err": 1.333
+   }
   }
  },
  "tb_mplacebo": {
@@ -78,6 +124,29 @@
     "within10": 6.9,
     "within25": 14.6,
     "med_rel_err": 0.846
+   }
+  },
+  "boundary_failed": {
+   "exact": {
+    "n": 873,
+    "exact_hit": 1.0,
+    "within10": 2.7,
+    "within25": 14.4,
+    "med_rel_err": 0.75
+   },
+   "atmost": {
+    "n": 345,
+    "exact_hit": 3.8,
+    "within10": 6.4,
+    "within25": 13.0,
+    "med_rel_err": 1.333
+   },
+   "atleast": {
+    "n": 504,
+    "exact_hit": 5.0,
+    "within10": 6.5,
+    "within25": 17.3,
+    "med_rel_err": 0.7
    }
   }
  },
