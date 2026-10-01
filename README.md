@@ -105,10 +105,20 @@ and do not require this environment.
 
 1. Set `WORK_ROOT` to a writable working directory (literal placeholder in
    the scripts; edit before running).
-2. Install the pinned stack from `requirements.txt`, including the TRL fork
-   at the commits listed there.
-3. Run `setup_and_reconstructed_modules.py`: model registry (checkpoint names
-   and revisions) and the TRL-fork checkout.
+2. `pip install -r requirements.txt` installs the CPU analysis stack only.
+   The GPU training stack is recorded as comments in that file and was
+   installed in Colab explicitly: `pip install torch==2.8.0
+   transformers==4.57.1 peft==0.17.1 vllm==0.10.2 datasets==4.8.5
+   mlflow==3.7.0`.
+3. Clone the MDP-GRPO repository (see Attribution) into
+   `WORK_ROOT/MDP-GRPO-main` and check out commit `3b375080`:
+   `setup_and_reconstructed_modules.py` asserts that this checkout exists; it
+   does not clone it. The TRL fork is the one referenced by that repository
+   (base commit `0d5711040e24` plus the two author-modified files at
+   `3b375080`), installed with `pip install -e`. Then run
+   `setup_and_reconstructed_modules.py` (model registry; checkpoint IDs are
+   pinned by name, and per-model revision hashes were not separately
+   recorded).
 4. Run `reward_extension.py` to wrap the reward. Per-run variant settings
    (result-file label -> environment):
    - `grpo`: `TB_MODE=off`
@@ -121,11 +131,18 @@ and do not require this environment.
      the released piecewise / fixed anchor as described in the paper
    - `TB_LOG`: intervention-log output path (shipped under `logs/`)
    Seeds: 42-46 for five-seed configurations, 42-44 for three-seed.
+   The upstream `VARIANTS` registry has no entries for the labels
+   `tb_mplacebo` / `tb_vc` / `tb_e025` / `tb_e100`: these runs reuse the
+   `tb_tie` launcher entry with the environment variables above, and the
+   label only names the result files.
 5. Launch training via the prior work's `train.py` (commit `3b375080`) with
    the configuration of Sec. V-D.
 6. Run `eval_pipeline.py` with `THEIR_EVAL`/`OUR_EVAL` dataset paths for
    MDP-500 / Assembled-500 and the IFEval path; evaluation prompting is
    defined there.
+   Steps 3-6 run in one Python session (the original Colab notebook
+   namespace): `eval_pipeline.py` consumes the registry and dataset paths
+   defined by the earlier steps; there is no separate launcher script.
 
 The training-data assembly script was not preserved (see Data provenance);
 `data/` ships the exact experimental input files instead.

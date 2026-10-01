@@ -233,6 +233,32 @@ def main():
         "ci95":[round(cg[0],3),round(cg[1],3)],"p":round(pg,5)}
     print(f"  b {eg:+.4f}  se {sg:.4f}  df {dg:.2f}  ci [{cg[0]:.3f},{cg[1]:.3f}]  p {pg:.5f}")
 
+    # [2g] common-seed sensitivity: restrict both arms to the shared seed
+    # identifiers and compare paired vs independent-arm treatment of them
+    print("\n[2g] common-seed sensitivity (PTB vs matched placebo, shared seeds)")
+    import re as _re
+    def _sdk(k):
+        mm=_re.search(r"(\d+)\s*$", str(k)); return mm.group(1) if mm else str(k)
+    dmp=[];vtp=[];nup=[];dmi=[];vti=[];nui=[]
+    for mk in mods:
+        pa={_sdk(s):v for (m,s),v in P2.items() if m==mk}
+        pb={_sdk(s):v for (m,s),v in M2.items() if m==mk}
+        com=sorted(set(pa)&set(pb)); n=len(com)
+        difs=[pa[s]-pb[s] for s in com]
+        dmp.append(_s.mean(difs)); vtp.append(_s.variance(difs)/n); nup.append(n-1)
+        a=[pa[s] for s in com]; b=[pb[s] for s in com]
+        va=_s.variance(a)/n; vb=_s.variance(b)/n
+        dmi.append(_s.mean(a)-_s.mean(b)); vti.append(va+vb)
+        nui.append((va+vb)**2/(va*va/(n-1)+vb*vb/(n-1)))
+    ep,sp,dp,cp,pp=ws_ci(dmp,vtp,nup)
+    out["common_seed_paired"]={"b":round(ep,4),"se":round(sp,4),"df":round(dp,2),
+        "ci95":[round(cp[0],3),round(cp[1],3)],"p":round(pp,5)}
+    print(f"  paired      b {ep:+.4f}  se {sp:.4f}  df {dp:.2f}  ci [{cp[0]:.3f},{cp[1]:.3f}]  p {pp:.5f}")
+    ei,si,di,cq,pi=ws_ci(dmi,vti,nui)
+    out["common_seed_independent"]={"b":round(ei,4),"se":round(si,4),"df":round(di,2),
+        "ci95":[round(cq[0],3),round(cq[1],3)],"p":round(pi,5)}
+    print(f"  independent b {ei:+.4f}  se {si:.4f}  df {di:.2f}  ci [{cq[0]:.3f},{cq[1]:.3f}]  p {pi:.5f}")
+
     # 3) permutation test: coverage labels permuted at the class level, jointly
     #    across all cells (exchangeable under the null; see Section V-I)
     print(f"\n[3] permutation ({args.perm} draws, labels shared across cells)")
