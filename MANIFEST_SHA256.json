@@ -1,6 +1,7 @@
 {
  "LICENSE": "4fa9a00b6c0a54163e02440a675dea271fadd6a48d7f5117c6a70478b2d18124",
- "README.md": "36c1683c4fcf67f9dd91ad0b9ade16720f7fbb128cfb216c6182577862a77f0f",
+ "README.md": "278083fa3c491d11aec079a91595130a92b79f173dee9f21d95d3bea94ca7caa",
+ "REPRODUCIBILITY_NOTES.md": "a36f657f1abd6b94ac532dfe7bf389ebdb61fdc534cec3704048cd6c8846ee9d",
  "code/eval_pipeline.py": "0184ef2fb63e3509cb0b26254b9c81ceb945bf8ebd8fea941827fac11b0232bd",
  "code/figures.py": "399f6a07979219b15fd78f6eacb66beacc3310bf555c616b256406300e3d046b",
  "code/reward_extension.py": "832ce384fa164a1decaaf1e7262d95fb8da8e268883c604637412dd8ee066a9d",
@@ -75,6 +76,7 @@
  "results/legacy/boundary_summary_three_sets.json": "cd0bab8d077b9be0159970231e224a4d026703474bb33f0c8e9b0611a64d2f3c",
  "results/length_truncation_summary.json": "49457da34117d52973740cf25eba177c6435e7e577470c598e788a18ee867ce6",
  "results/per_class_rates.csv": "d1b3ccba9068c66d89b160b9b1a57d7184ec5b7d42a70d5f2106d40a1c316ea5",
+ "results/per_run_ifeval.csv": "002f0383678148de2d1271c9f5f007a264c9572ee7243e9cd6d7e405c93addcf",
  "results/result_da_half_seed42.json": "e5969c8e4cdcb78b9126c72d4839706669f1b9c245526bf2e7df392f49f0e206",
  "results/result_da_half_seed43.json": "33afdab853e5cb267f69551f6cf6ea92a395fa27ef7784f21a04dbcf7a9291b8",
  "results/result_da_half_seed44.json": "5f47a41b3c9a973514df3c029d14bb07433e732b22e8a4a8bca9a857864fb63d",
